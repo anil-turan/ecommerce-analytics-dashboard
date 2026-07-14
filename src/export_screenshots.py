@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 
 from src.generator import generate_sales
 from src.metrics import compute_kpis, revenue_by_dimension, revenue_by_period, top_products
+from src.significance import compare_dimension_pairs
 
 OUT_DIR = Path(__file__).resolve().parents[1] / "reports" / "screenshots"
 TEMPLATE = "plotly_dark"
@@ -115,6 +116,34 @@ def export_top_products_table(df, out_dir: Path) -> None:
     fig.write_image(out_dir / "06_top_products.png", width=1000, height=450, scale=2)
 
 
+def export_significance_panel(df, out_dir: Path) -> None:
+    sig = compare_dimension_pairs(df, "acquisition_channel", metric_col="revenue")
+    sig = sig.copy()
+    sig["pair"] = sig["group_a"] + " vs " + sig["group_b"]
+    sig["error_low"] = sig["diff"] - sig["ci_low"]
+    sig["error_high"] = sig["ci_high"] - sig["diff"]
+
+    colors = ["#e76f51" if s else "#64748b" for s in sig["significant"]]
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=sig["diff"], y=sig["pair"], mode="markers",
+        marker=dict(size=10, color=colors),
+        error_x=dict(
+            type="data", symmetric=False,
+            array=sig["error_high"], arrayminus=sig["error_low"],
+        ),
+    ))
+    fig.add_vline(x=0, line_dash="dash", line_color="#94a3b8")
+    fig.update_layout(
+        template=TEMPLATE,
+        title="AOV difference by acquisition channel (95% bootstrap CI)",
+        xaxis_title="Difference in mean order value (£)",
+        margin=dict(t=60, b=40),
+    )
+    height = 80 + 40 * len(sig)
+    fig.write_image(out_dir / "07_significance_channels.png", width=1000, height=height, scale=2)
+
+
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     df = generate_sales()
@@ -123,6 +152,7 @@ def main():
     export_category_revenue(df, OUT_DIR)
     export_region_and_channel(df, OUT_DIR)
     export_top_products_table(df, OUT_DIR)
+    export_significance_panel(df, OUT_DIR)
     print(f"Wrote preview images to {OUT_DIR}")
 
 

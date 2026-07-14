@@ -20,6 +20,7 @@ from src.metrics import (
     revenue_by_period,
     top_products,
 )
+from src.significance import compare_dimension_pairs
 
 DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "sales.csv"
 
@@ -130,6 +131,45 @@ def main():
         top_products(filtered, n=10).style.format({"revenue": "£{:,.2f}"}),
         use_container_width=True, hide_index=True,
     )
+
+    st.divider()
+    st.subheader("Is the AOV gap between channels real, or just noise?")
+    st.caption(
+        "Bootstrap 95% confidence interval on the difference in mean order value "
+        "between every pair of acquisition channels. A gap is flagged significant "
+        "only when its interval excludes zero — the bar chart above can't tell you that."
+    )
+    sig = compare_dimension_pairs(filtered, "acquisition_channel", metric_col="revenue")
+    if sig.empty:
+        st.info("Not enough completed orders in the current filter to compare channels.")
+    else:
+        sig = sig.copy()
+        sig["pair"] = sig["group_a"] + " vs " + sig["group_b"]
+        sig["error_low"] = sig["diff"] - sig["ci_low"]
+        sig["error_high"] = sig["ci_high"] - sig["diff"]
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=sig["diff"], y=sig["pair"], mode="markers",
+            marker=dict(
+                size=10,
+                color=["#e76f51" if s else "#64748b" for s in sig["significant"]],
+            ),
+            error_x=dict(
+                type="data", symmetric=False,
+                array=sig["error_high"], arrayminus=sig["error_low"],
+            ),
+            name="Difference in AOV (£)",
+        ))
+        fig.add_vline(x=0, line_dash="dash", line_color="#94a3b8")
+        fig.update_layout(
+            xaxis_title="Difference in mean order value, group_b - group_a (£)",
+            margin=dict(t=10, b=10), height=80 + 40 * len(sig),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption(
+            "Orange = statistically significant (95% CI excludes zero). "
+            "Grey = not distinguishable from noise at this sample size."
+        )
 
 
 if __name__ == "__main__":
