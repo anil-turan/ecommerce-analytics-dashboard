@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.38-FF4B4B)](https://streamlit.io/)
 [![Plotly](https://img.shields.io/badge/Plotly-5.22-3F4F75)](https://plotly.com/python/)
-[![tests](https://img.shields.io/badge/tests-13%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-19%20passing-brightgreen)](tests/)
 
 An executive-facing, **fully interactive** analytics dashboard — KPI cards,
 revenue trend, category/region/channel breakdowns, and a top-products table,
@@ -34,6 +34,9 @@ here to a single denormalised fact table instead of a relational schema).
 3. **No desktop BI license required.** Power BI Desktop is Windows-only and
    Tableau Desktop needs a license; a Streamlit + Plotly dashboard is fully
    open, scriptable, and deployable to Streamlit Community Cloud for free.
+4. **Reports whether a gap is real, not just what it is.** `src/significance.py`
+   bootstrap-tests every cross-channel/region KPI gap the dashboard surfaces —
+   a BI tool will happily chart noise as if it were a finding.
 
 ---
 
@@ -44,11 +47,13 @@ ecommerce-analytics-dashboard/
 ├── src/
 │   ├── generator.py           # synthetic UK e-commerce sales generator
 │   ├── metrics.py              # KPI/aggregation logic (filter, KPIs, top products)
+│   ├── significance.py        # bootstrap significance testing on cross-group KPI gaps
 │   ├── app.py                  # the Streamlit app
 │   └── export_screenshots.py  # static Plotly exports for this README
 ├── tests/
 │   ├── test_generator.py
-│   └── test_metrics.py        # KPI correctness, independent of the UI
+│   ├── test_metrics.py        # KPI correctness, independent of the UI
+│   └── test_significance.py   # bootstrap CI correctness
 ├── reports/screenshots/       # static preview images (see below)
 ├── .streamlit/config.toml     # dark theme config
 └── pyproject.toml
@@ -78,6 +83,21 @@ ecommerce-analytics-dashboard/
 **Top 10 products:**
 
 ![Top products](reports/screenshots/06_top_products.png)
+
+**Is the AOV gap between channels real, or just noise?**
+
+![Significance by channel](reports/screenshots/07_significance_channels.png)
+
+A bar chart showing "Paid Search AOV is £279, Organic is £269" invites a
+stakeholder to read a difference into noise. `src/significance.py` runs a
+bootstrap 95% confidence interval on the AOV difference between every pair
+of acquisition channels — on the full synthetic dataset, **none of the 10
+pairwise channel gaps are statistically significant** (every CI crosses
+zero), while every pairwise **category** gap is (Electronics' AOV genuinely
+differs from Books' — no surprise given the price ranges baked into the
+generator, but it's the right control case showing the test isn't just
+always saying "not significant"). This is the difference between reporting
+a number and knowing whether to act on it.
 
 > These are static exports (`python -m src.export_screenshots`) for
 > browsing on GitHub. The live app (`streamlit run src/app.py`) is fully
@@ -133,6 +153,11 @@ a shareable public URL for a CV/LinkedIn link.
   seasonality structure rather than being uniform noise.
 - **`@st.cache_data`** on the data loader avoids regenerating/reloading the
   dataset on every filter interaction.
+- **`src/significance.py`'s bootstrap is from-scratch** (no `scipy.stats`
+  dependency added) — resamples each group independently with replacement
+  and reports the CI on the difference in means; a gap is "significant"
+  when that CI excludes zero. Recomputed live on whatever the sidebar
+  filters currently select, not just on the full dataset.
 
 ---
 
