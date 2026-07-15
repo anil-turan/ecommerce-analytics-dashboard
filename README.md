@@ -158,13 +158,3 @@ a shareable public URL for a CV/LinkedIn link.
   and reports the CI on the difference in means; a gap is "significant"
   when that CI excludes zero. Recomputed live on whatever the sidebar
   filters currently select, not just on the full dataset.
-
----
-
-## Portfolio Context
-
-Built for UK data analyst applications, alongside a broader data science
-portfolio — this project specifically targets the "interactive dashboard"
-artefact that DA job postings and recruiters look for, using an
-open/scriptable stack (Streamlit + Plotly) in place of a desktop BI tool
-license.
