@@ -4,6 +4,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.38-FF4B4B)](https://streamlit.io/)
 [![Plotly](https://img.shields.io/badge/Plotly-5.22-3F4F75)](https://plotly.com/python/)
 [![tests](https://img.shields.io/badge/tests-19%20passing-brightgreen)](tests/)
+[![Looker Studio](https://img.shields.io/badge/Looker%20Studio-report-4285F4?logo=looker)](https://lookerstudio.google.com/reporting/94e3f261-a530-46c7-86b5-1a6dec8a66af)
 
 An executive-facing, **fully interactive** analytics dashboard — KPI cards,
 revenue trend, category/region/channel breakdowns, and a top-products table,
@@ -18,6 +19,19 @@ license or desktop install required.
 tenure-decaying purchase hazard (same generation approach as the sibling
 [sql-analytics-case-study](../sql-analytics-case-study) project, applied
 here to a single denormalised fact table instead of a relational schema).
+
+---
+
+## Interactive Report (Looker Studio)
+
+**[Ecommerce Channel Performance Report →](https://lookerstudio.google.com/reporting/94e3f261-a530-46c7-86b5-1a6dec8a66af)**
+
+A Looker Studio report built on the same order-level data as the Streamlit
+dashboard above: revenue by acquisition channel, monthly revenue trend,
+revenue by category, and headline KPIs (total revenue, total orders) —
+a second, Google-native BI artifact alongside the Streamlit + Tableau ones,
+since Looker Studio is a distinct named tool in many UK Data Analyst job
+postings.
 
 ---
 
